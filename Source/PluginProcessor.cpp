@@ -32,8 +32,8 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
 {
     MemoryBlock bookmarkBuffer;
     valueTreeState.state.appendChild({ "uiState", {
-            { "width", GuiConstants::minWidth },
-            { "height", GuiConstants::minHeight }
+            { "width", (GuiConstants::minWidth + GuiConstants::maxWidth)/2 },
+            { "height", (GuiConstants::minHeight + GuiConstants::maxHeight)/2 }
         }, {} }, nullptr);
     valueTreeState.state.appendChild({ "soundFont", {
         { "path", "" },
@@ -43,6 +43,12 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
         { "path", "" },
         { "bookmark", std::move(bookmarkBuffer) },
     }, {} }, nullptr);
+
+    juce::ValueTree noteNamesTree("noteNames");
+    for (int i = 0; i < 132; ++i)
+        noteNamesTree.setProperty(juce::String(i), "", nullptr);
+    valueTreeState.state.appendChild(noteNamesTree, nullptr);
+    
     // no properties, no subtrees (yet)
     valueTreeState.state.appendChild({ "banks", {}, {} }, nullptr);
     
@@ -200,6 +206,19 @@ void JuicySFAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
     midiMessages.clear();
 }
 
+std::optional<String> JuicySFAudioProcessor::getNameForMidiNoteNumber(int midiNoteNumber, int midiChannel)
+{
+    if (midiNoteNumber >= 0 && midiNoteNumber < 132) {
+        String propertyName = String(midiNoteNumber);
+        Value value = valueTreeState.state.getChildWithName("noteNames").getPropertyAsValue(propertyName, nullptr);
+        if (value.toString() != "")
+            return value.toString();
+        else
+            return {};
+    }
+    return {};
+}
+
 //==============================================================================
 bool JuicySFAudioProcessor::hasEditor() const
 {
@@ -233,20 +252,21 @@ void JuicySFAudioProcessor::getStateInformation (MemoryBlock& destData)
         ValueTree tree{valueTreeState.state.getChildWithName("uiState")};
         XmlElement* newElement{xml.createNewChildElement("uiState")};
         {
-            double value{tree.getProperty("width", GuiConstants::minWidth)};
+            double value{tree.getProperty("width", (GuiConstants::minWidth + GuiConstants::maxWidth) / 2)};
             newElement->setAttribute("width", value);
         }
         {
-            double value{tree.getProperty("height", GuiConstants::minHeight)};
+            double value{tree.getProperty("height", (GuiConstants::minHeight + GuiConstants::maxHeight) / 2)};
             newElement->setAttribute("height", value);
         }
     }
     {
         ValueTree tree{ valueTreeState.state.getChildWithName("noteNames") };
         XmlElement* newElement{ xml.createNewChildElement("noteNames") };
-        {
-            double value{ tree.getProperty("height", GuiConstants::minHeight) };
-            newElement->setAttribute("height", value);
+        for (int i = 0; i < 132; i++) {
+            String propertyName = juce::String(i);
+            String value = tree.getProperty(propertyName, "");
+            newElement->setAttribute(propertyName, value);
         }
     }
     {
@@ -295,6 +315,23 @@ void JuicySFAudioProcessor::setStateInformation (const void* data, int sizeInByt
         // make sure that it's actually our type of XML object..
         if (xmlState->hasTagName(valueTreeState.state.getType())) {
             {
+                XmlElement* xmlElement{ xmlState->getChildByName("noteNamesFile") };
+                if (xmlElement) {
+                    ValueTree tree{ valueTreeState.state.getChildWithName("noteNamesFile") };
+                    {
+                        Value value{ tree.getPropertyAsValue("path", nullptr) };
+                        value = xmlElement->getStringAttribute("path", value.getValue());
+                    }
+                    {
+                        Value value{ tree.getPropertyAsValue("bookmark", nullptr) };
+                        jassert(value.getValue().isBinaryData());
+                        MemoryBlock buffer;
+                        buffer.fromBase64Encoding(xmlElement->getStringAttribute("bookmark", value.getValue()));
+                        value = buffer;
+                    }
+                }
+            }
+            {
                 XmlElement* xmlElement{xmlState->getChildByName("soundFont")};
                 if (xmlElement) {
                     ValueTree tree{valueTreeState.state.getChildWithName("soundFont")};
@@ -312,19 +349,13 @@ void JuicySFAudioProcessor::setStateInformation (const void* data, int sizeInByt
                 }
             }
             {
-                XmlElement* xmlElement{ xmlState->getChildByName("noteNamesFile") };
+                ValueTree tree{ valueTreeState.state.getChildWithName("noteNames") };
+                XmlElement* xmlElement{ xmlState->getChildByName("noteNames") };
                 if (xmlElement) {
-                    ValueTree tree{ valueTreeState.state.getChildWithName("noteNamesFile") };
-                    {
-                        Value value{ tree.getPropertyAsValue("path", nullptr) };
-                        value = xmlElement->getStringAttribute("path", value.getValue());
-                    }
-                    {
-                        Value value{ tree.getPropertyAsValue("bookmark", nullptr) };
-                        jassert(value.getValue().isBinaryData());
-                        MemoryBlock buffer;
-                        buffer.fromBase64Encoding(xmlElement->getStringAttribute("bookmark", value.getValue()));
-                        value = buffer;
+                    for (int i = 0; i < 132; i++) {
+                        String propertyName = juce::String(i);
+                        Value value{ tree.getPropertyAsValue(propertyName, nullptr) };
+                        value = xmlElement->getStringAttribute(propertyName, value.getValue());
                     }
                 }
             }

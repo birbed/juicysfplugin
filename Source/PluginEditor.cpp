@@ -55,16 +55,58 @@ JuicySFAudioProcessorEditor::JuicySFAudioProcessorEditor(
     addAndMakeVisible(soundFontFilePicker);
     addAndMakeVisible(soundFontFilePickerLabel);
     soundFontFilePickerLabel.setText("Soundfont: ", dontSendNotification);
+    addAndMakeVisible(soundFontFileClearButton);
+    soundFontFileClearButton.setButtonText("X");
+    soundFontFileClearButton.onClick = [&] {
+        Value value{ valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("path", nullptr)};
+        value.setValue("");
+    };
 
     addAndMakeVisible(noteNamesFilePicker);
     addAndMakeVisible(noteNamesFilePickerLabel);
     noteNamesFilePickerLabel.setText("Note Names: ", dontSendNotification);
+    addAndMakeVisible(noteNamesFileClearButton);
+    noteNamesFileClearButton.setButtonText("X");
+    noteNamesFileClearButton.onClick = [&] {
+        Value value{ valueTreeState.state.getChildWithName("noteNamesFile").getPropertyAsValue("path", nullptr) };
+        value.setValue("");
+    };
+
+
 }
 
 // called when the stored window size changes
 void JuicySFAudioProcessorEditor::valueChanged(Value&) {
     setSize(lastUIWidth.getValue(), lastUIHeight.getValue());
 }
+
+void JuicySFAudioProcessorEditor::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged,
+    const Identifier& property)
+{
+    if (treeWhosePropertyHasChanged.getType() == StringRef("noteNamesFile")) {
+        if (property == StringRef("path")) {
+            String soundFontPath = treeWhosePropertyHasChanged.getProperty("path", "");
+            File file = File(soundFontPath);
+
+            juce::StringArray lines;
+            lines.addLines(file.loadFileAsString());
+
+            for (int i = 0; i < 132; ++i)
+            {
+                String propertyName = juce::String(lines.size()-1 - i);
+                Value value{ valueTreeState.state.getChildWithName("noteNames").getPropertyAsValue(propertyName, nullptr) };
+
+                if (i < lines.size() && lines[i].isNotEmpty())
+                    value.setValue(lines[i]);
+                else
+                    value.setValue("");
+            }
+
+            processor.updateHostDisplay();
+        }
+    }
+}
+
 
 JuicySFAudioProcessorEditor::~JuicySFAudioProcessorEditor()
 {
@@ -99,10 +141,14 @@ void JuicySFAudioProcessorEditor::resized()
 
     Rectangle<int> topBar = r.removeFromTop(filePickerHeight + padding).reduced(padding, 0).withTrimmedTop(padding);
     soundFontFilePickerLabel.setBounds(topBar.removeFromLeft(soundFontFilePickerLabelWidth));
+    soundFontFileClearButton.setBounds(topBar.removeFromRight(filePickerHeight));
+    topBar.removeFromRight(padding);
     soundFontFilePicker.setBounds(topBar);
 
     topBar = r.removeFromTop(filePickerHeight + padding).reduced(padding, 0).withTrimmedTop(padding);
     noteNamesFilePickerLabel.setBounds(topBar.removeFromLeft(noteNamesFilePickerLabelWidth));
+    noteNamesFileClearButton.setBounds(topBar.removeFromRight(filePickerHeight));
+    topBar.removeFromRight(padding);
     noteNamesFilePicker.setBounds(topBar);
 
     midiKeyboard.setBounds (r.removeFromBottom (pianoHeight).reduced(padding, 0));

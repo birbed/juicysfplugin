@@ -40,6 +40,7 @@ public:
                                                     int oldIndex, int newIndex) override {};
     inline virtual void valueTreeParentChanged (ValueTree& treeWhoseParentHasChanged) override {};
     inline virtual void valueTreeRedirected (ValueTree& treeWhichHasBeenChanged) override {};
+
 private:
     FilenameComponent fileChooser;
 

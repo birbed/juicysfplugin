@@ -68,6 +68,8 @@ public:
 
     MidiKeyboardState keyboardState;
 
+    std::optional<String> getNameForMidiNoteNumber(int midiNoteNumber, int midiChannel) override;
+
 private:
     void initialiseSynth();
 
