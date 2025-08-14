@@ -45,8 +45,10 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
     }, {} }, nullptr);
 
     juce::ValueTree noteNamesTree("noteNames");
-    for (int i = 0; i < 132; ++i)
-        noteNamesTree.setProperty(juce::String(i), "", nullptr);
+    for (int i = 0; i < 132; ++i) {
+        String propertyName = String("Note") + String(i);
+        noteNamesTree.setProperty(propertyName, "", nullptr);
+    }
     valueTreeState.state.appendChild(noteNamesTree, nullptr);
     
     // no properties, no subtrees (yet)
@@ -209,7 +211,7 @@ void JuicySFAudioProcessor::processBlock(AudioBuffer<float>& buffer, MidiBuffer&
 std::optional<String> JuicySFAudioProcessor::getNameForMidiNoteNumber(int midiNoteNumber, int midiChannel)
 {
     if (midiNoteNumber >= 0 && midiNoteNumber < 132) {
-        String propertyName = String(midiNoteNumber);
+        String propertyName = String("Note") + String(midiNoteNumber);
         Value value = valueTreeState.state.getChildWithName("noteNames").getPropertyAsValue(propertyName, nullptr);
         if (value.toString() != "")
             return value.toString();
@@ -264,7 +266,7 @@ void JuicySFAudioProcessor::getStateInformation (MemoryBlock& destData)
         ValueTree tree{ valueTreeState.state.getChildWithName("noteNames") };
         XmlElement* newElement{ xml.createNewChildElement("noteNames") };
         for (int i = 0; i < 132; i++) {
-            String propertyName = juce::String(i);
+            String propertyName = String("Note") + String(i);
             String value = tree.getProperty(propertyName, "");
             newElement->setAttribute(propertyName, value);
         }
@@ -353,7 +355,7 @@ void JuicySFAudioProcessor::setStateInformation (const void* data, int sizeInByt
                 XmlElement* xmlElement{ xmlState->getChildByName("noteNames") };
                 if (xmlElement) {
                     for (int i = 0; i < 132; i++) {
-                        String propertyName = juce::String(i);
+                        String propertyName = String("Note") + String(i);
                         Value value{ tree.getPropertyAsValue(propertyName, nullptr) };
                         value = xmlElement->getStringAttribute(propertyName, value.getValue());
                     }

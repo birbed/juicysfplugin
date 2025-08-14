@@ -244,9 +244,9 @@ void FluidSynthModel::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasCh
 #else
         if (property == StringRef("path")) {
             String soundFontPath = treeWhosePropertyHasChanged.getProperty("path", "");
-            if (soundFontPath.isNotEmpty()) {
+            //if (soundFontPath.isNotEmpty()) {
                 unloadAndLoadFont(soundFontPath);
-            }
+            //}
         }
 #endif
     }

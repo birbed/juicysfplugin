@@ -122,11 +122,11 @@ void FilePicker::setDisplayedFilePath(const String& path) {
 }
 
 bool FilePicker::shouldChangeDisplayedFilePath(const String &path) {
-    if (path.isEmpty()) {
+    /*if (path.isEmpty()) {
         return false;
-    }
-    if (path == currentPath) {
+    }*/
+    /*if (path == currentPath) {
         return false;
-    }
+    }*/
     return true;
 }

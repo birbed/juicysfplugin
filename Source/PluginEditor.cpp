@@ -11,6 +11,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "GuiConstants.h"
+#include "Util.h"
 
 //==============================================================================
 JuicySFAudioProcessorEditor::JuicySFAudioProcessorEditor(
@@ -40,6 +41,7 @@ JuicySFAudioProcessorEditor::JuicySFAudioProcessorEditor(
 
     lastUIWidth.addListener(this);
     lastUIHeight.addListener(this);
+    valueTreeState.state.addListener(this);
 
     midiKeyboard.setName ("MIDI Keyboard");
 
@@ -85,15 +87,15 @@ void JuicySFAudioProcessorEditor::valueTreePropertyChanged(ValueTree& treeWhoseP
 {
     if (treeWhosePropertyHasChanged.getType() == StringRef("noteNamesFile")) {
         if (property == StringRef("path")) {
-            String soundFontPath = treeWhosePropertyHasChanged.getProperty("path", "");
-            File file = File(soundFontPath);
+            String path = treeWhosePropertyHasChanged.getProperty("path", "");
+            File file = File(path);
 
             juce::StringArray lines;
             lines.addLines(file.loadFileAsString());
 
             for (int i = 0; i < 132; ++i)
             {
-                String propertyName = juce::String(lines.size()-1 - i);
+                String propertyName = String("Note") + String(lines.size()-1 - i);
                 Value value{ valueTreeState.state.getChildWithName("noteNames").getPropertyAsValue(propertyName, nullptr) };
 
                 if (i < lines.size() && lines[i].isNotEmpty())
