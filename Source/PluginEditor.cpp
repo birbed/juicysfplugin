@@ -21,7 +21,8 @@ JuicySFAudioProcessorEditor::JuicySFAudioProcessorEditor(
 , valueTreeState{valueTreeState}
 , midiKeyboard{p.keyboardState, SurjectiveMidiKeyboardComponent::horizontalKeyboard}
 , tablesComponent{valueTreeState}
-, filePicker{valueTreeState}
+, soundFontFilePicker{valueTreeState, "soundFont", "*.sf2;*.sf3", "Choose a Soundfont file to load into the synthesizer"}
+, noteNamesFilePicker{valueTreeState, "noteNamesFile", "*.txt", "Choose an optional text file to change piano roll note names"}
 , slidersComponent{valueTreeState, p.getFluidSynthModel()}
 {
     // set resize limits for this plug-in
@@ -50,8 +51,14 @@ JuicySFAudioProcessorEditor::JuicySFAudioProcessorEditor(
 
     addAndMakeVisible(slidersComponent);
     addAndMakeVisible(tablesComponent);
-    addAndMakeVisible(filePicker);
 
+    addAndMakeVisible(soundFontFilePicker);
+    addAndMakeVisible(soundFontFilePickerLabel);
+    soundFontFilePickerLabel.setText("Soundfont: ", dontSendNotification);
+
+    addAndMakeVisible(noteNamesFilePicker);
+    addAndMakeVisible(noteNamesFilePickerLabel);
+    noteNamesFilePickerLabel.setText("Note Names: ", dontSendNotification);
 }
 
 // called when the stored window size changes
@@ -86,8 +93,17 @@ void JuicySFAudioProcessorEditor::resized()
     const int padding{8};
     const int pianoHeight{70};
     const int filePickerHeight{25};
+    const int soundFontFilePickerLabelWidth{90};
+    const int noteNamesFilePickerLabelWidth{100};
     Rectangle<int> r{getLocalBounds()};
-    filePicker.setBounds(r.removeFromTop(filePickerHeight + padding).reduced(padding, 0).withTrimmedTop(padding));
+
+    Rectangle<int> topBar = r.removeFromTop(filePickerHeight + padding).reduced(padding, 0).withTrimmedTop(padding);
+    soundFontFilePickerLabel.setBounds(topBar.removeFromLeft(soundFontFilePickerLabelWidth));
+    soundFontFilePicker.setBounds(topBar);
+
+    topBar = r.removeFromTop(filePickerHeight + padding).reduced(padding, 0).withTrimmedTop(padding);
+    noteNamesFilePickerLabel.setBounds(topBar.removeFromLeft(noteNamesFilePickerLabelWidth));
+    noteNamesFilePicker.setBounds(topBar);
 
     midiKeyboard.setBounds (r.removeFromBottom (pianoHeight).reduced(padding, 0));
 

@@ -39,6 +39,10 @@ JuicySFAudioProcessor::JuicySFAudioProcessor()
         { "path", "" },
         { "bookmark", std::move(bookmarkBuffer) },
     }, {} }, nullptr);
+    valueTreeState.state.appendChild({ "noteNamesFile", {
+        { "path", "" },
+        { "bookmark", std::move(bookmarkBuffer) },
+    }, {} }, nullptr);
     // no properties, no subtrees (yet)
     valueTreeState.state.appendChild({ "banks", {}, {} }, nullptr);
     
@@ -238,8 +242,30 @@ void JuicySFAudioProcessor::getStateInformation (MemoryBlock& destData)
         }
     }
     {
+        ValueTree tree{ valueTreeState.state.getChildWithName("noteNames") };
+        XmlElement* newElement{ xml.createNewChildElement("noteNames") };
+        {
+            double value{ tree.getProperty("height", GuiConstants::minHeight) };
+            newElement->setAttribute("height", value);
+        }
+    }
+    {
         ValueTree tree{valueTreeState.state.getChildWithName("soundFont")};
         XmlElement* newElement{xml.createNewChildElement("soundFont")};
+        {
+            String value = tree.getProperty("path", "");
+            newElement->setAttribute("path", value);
+        }
+        {
+            MemoryBlock buffer;
+            var value = tree.getProperty("bookmark", buffer);
+            jassert(value.isBinaryData());
+            newElement->setAttribute("bookmark", value.getBinaryData()->toBase64Encoding());
+        }
+    }
+    {
+        ValueTree tree{ valueTreeState.state.getChildWithName("noteNamesFile") };
+        XmlElement* newElement{ xml.createNewChildElement("noteNamesFile") };
         {
             String value = tree.getProperty("path", "");
             newElement->setAttribute("path", value);
@@ -278,6 +304,23 @@ void JuicySFAudioProcessor::setStateInformation (const void* data, int sizeInByt
                     }
                     {
                         Value value{tree.getPropertyAsValue("bookmark", nullptr)};
+                        jassert(value.getValue().isBinaryData());
+                        MemoryBlock buffer;
+                        buffer.fromBase64Encoding(xmlElement->getStringAttribute("bookmark", value.getValue()));
+                        value = buffer;
+                    }
+                }
+            }
+            {
+                XmlElement* xmlElement{ xmlState->getChildByName("noteNamesFile") };
+                if (xmlElement) {
+                    ValueTree tree{ valueTreeState.state.getChildWithName("noteNamesFile") };
+                    {
+                        Value value{ tree.getPropertyAsValue("path", nullptr) };
+                        value = xmlElement->getStringAttribute("path", value.getValue());
+                    }
+                    {
+                        Value value{ tree.getPropertyAsValue("bookmark", nullptr) };
                         jassert(value.getValue().isBinaryData());
                         MemoryBlock buffer;
                         buffer.fromBase64Encoding(xmlElement->getStringAttribute("bookmark", value.getValue()));

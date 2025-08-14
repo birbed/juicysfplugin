@@ -18,7 +18,7 @@
 #endif
 
 FilePicker::FilePicker(
-    AudioProcessorValueTreeState& valueTreeState
+    AudioProcessorValueTreeState& valueTreeState, const char* state, string fileTypes, string hintText
     // FluidSynthModel& fluidSynthModel
 )
 : fileChooser{
@@ -27,9 +27,9 @@ FilePicker::FilePicker(
     true,
     false,
     false,
-    "*.sf2;*.sf3",
+    fileTypes,
     String(),
-    "Choose a Soundfont file to load into the synthesizer"}
+    hintText}
 , valueTreeState{valueTreeState}
 // , fluidSynthModel{fluidSynthModel}
 // , currentPath{}
@@ -40,13 +40,15 @@ FilePicker::FilePicker(
     // faster (rounded edges introduce transparency)
     setOpaque (true);
 
+    currentState = state;
+
     // setDisplayedFilePath(fluidSynthModel.getCurrentSoundFontAbsPath());
-    setDisplayedFilePath(valueTreeState.state.getChildWithName("soundFont").getProperty("path", ""));
+    setDisplayedFilePath(valueTreeState.state.getChildWithName(currentState).getProperty("path", ""));
 
     addAndMakeVisible (fileChooser);
     fileChooser.addListener (this);
     valueTreeState.state.addListener(this);
-//    valueTreeState.state.getChildWithName("soundFont").sendPropertyChangeMessage("path");
+//    valueTreeState.state.getChildWithName(currentState).sendPropertyChangeMessage("path");
 
 #if JUCE_MAC || JUCE_IOS
     bookmarkCreationOptions |= kCFURLBookmarkCreationSecurityScopeAllowOnlyReadAccess;
@@ -84,21 +86,21 @@ void FilePicker::filenameComponentChanged (FilenameComponent*) {
     const UInt8 * cfDataBytePtr{CFDataGetBytePtr(cfData.get())};
     CFIndex cfDataByteLength{CFDataGetLength(cfData.get())};
     {
-        Value value{valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("bookmark", nullptr)};
+        Value value{valueTreeState.state.getChildWithName(currentState).getPropertyAsValue("bookmark", nullptr)};
         var var{static_cast<const void*>(cfDataBytePtr), static_cast<size_t>(cfDataByteLength)};
         value.setValue(var);
     }
 #endif
     // currentPath = fileChooser.getCurrentFile().getFullPathName();
     // fluidSynthModel.onFileNameChanged(fileChooser.getCurrentFile().getFullPathName(), -1, -1);
-    Value value{valueTreeState.state.getChildWithName("soundFont").getPropertyAsValue("path", nullptr)};
+    Value value{valueTreeState.state.getChildWithName(currentState).getPropertyAsValue("path", nullptr)};
     value.setValue(fileChooser.getCurrentFile().getFullPathName());
 //    value = fileChooser.getCurrentFile().getFullPathName();
 }
 
 void FilePicker::valueTreePropertyChanged(ValueTree& treeWhosePropertyHasChanged,
                                                const Identifier& property) {
-    if (treeWhosePropertyHasChanged.getType() == StringRef("soundFont")) {
+    if (treeWhosePropertyHasChanged.getType() == StringRef(currentState)) {
     // if (&treeWhosePropertyHasChanged == &valueTree) {
         if (property == StringRef("path")) {
             String soundFontPath = treeWhosePropertyHasChanged.getProperty("path", "");

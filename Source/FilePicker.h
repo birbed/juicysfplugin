@@ -18,7 +18,7 @@ class FilePicker: public Component,
 {
 public:
     FilePicker(
-        AudioProcessorValueTreeState& valueTreeState
+        AudioProcessorValueTreeState& valueTreeState, const char* state, string fileTypes, string hintText
         // FluidSynthModel& fluidSynthModel
     );
     ~FilePicker();
@@ -47,6 +47,8 @@ private:
     // FluidSynthModel& fluidSynthModel;
 
     String currentPath;
+
+    const char* currentState;
 
 #if JUCE_MAC || JUCE_IOS
     CFURLBookmarkCreationOptions bookmarkCreationOptions;

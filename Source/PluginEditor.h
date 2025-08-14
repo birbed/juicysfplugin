@@ -56,8 +56,13 @@ private:
 
     SurjectiveMidiKeyboardComponent midiKeyboard;
     TablesComponent tablesComponent;
-    FilePicker filePicker;
     SlidersComponent slidersComponent;
+
+    FilePicker soundFontFilePicker;
+    Label soundFontFilePickerLabel;
+
+    FilePicker noteNamesFilePicker;
+    Label noteNamesFilePickerLabel;
 
     bool focusInitialized;
 
