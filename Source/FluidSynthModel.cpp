@@ -390,6 +390,10 @@ void FluidSynthModel::processBlock(AudioBuffer<float>& buffer, MidiBuffer& midiM
                 *castParam = m.getProgramChangeNumber();
             }
         } else if (m.isPitchWheel()) {
+            fluid_synth_pitch_wheel_sens(
+                synth.get(),
+                channel,
+                16);
             fluid_synth_pitch_bend(
                 synth.get(),
                 channel,
